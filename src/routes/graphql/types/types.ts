@@ -114,7 +114,7 @@ const UserType: GraphQLObjectType = new GraphQLObjectType({
           },
         }); */
 
-        return prisma.user.findMany({
+        const subscriptions = prisma.user.findMany({
           where: {
             subscribedToUser: {
               some: {
@@ -123,6 +123,8 @@ const UserType: GraphQLObjectType = new GraphQLObjectType({
             },
           },
         });
+        
+        return subscriptions || [];
 
         // return await prisma.user.findMany({
         //   where: {
