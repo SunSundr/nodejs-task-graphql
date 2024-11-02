@@ -3,10 +3,10 @@ import {
   GraphQLObjectType, 
   GraphQLSchema, 
   GraphQLBoolean, 
-  GraphQLString, 
+  // GraphQLString, 
   GraphQLNonNull, 
   GraphQLList, 
-  GraphQLInt, 
+  // GraphQLInt, 
 } from 'graphql';
 import { 
   UserType, 
@@ -20,6 +20,7 @@ import { PrismaClient } from '@prisma/client';
 import { UUIDType } from './types/uuid.js';
 // import { User, Post } from '@prisma/client';
 import { Loaders  } from './loaders.js';
+import  { CreateUserInput, ChangeUserInput, CreatePostInput, CreateProfileInput, ChangeProfileInput, ChangePostInput } from './types/mutation.js';
 
 const prisma = new PrismaClient();
 
@@ -131,41 +132,126 @@ const MutationType = new GraphQLObjectType({
   name: 'Mutation',
   fields: {
     createUser: {
-      type: new GraphQLList(UserType),
+      type: UserType,
       args: {
-        name: { type: new GraphQLNonNull(GraphQLString) },
-        balance: { type: new GraphQLNonNull(GraphQLInt) },
+        dto: { type: new GraphQLNonNull(CreateUserInput) },
       },
-      resolve: async (_, { name, balance }) => {
-        return await prisma.user.create({ data: { name, balance } });
+      resolve: async (_, { dto }) => {
+        return await prisma.user.create({ data: dto });
       },
     },
     createPost: {
-      type: new GraphQLList(PostType),
+      type: PostType,
       args: {
-        title: { type: new GraphQLNonNull(GraphQLString) },
-        content: { type: new GraphQLNonNull(GraphQLString) },
-        authorId: { type: new GraphQLNonNull(UUIDType) },
+        dto: { type: new GraphQLNonNull(CreatePostInput) },
       },
-      resolve: async (_, { title, content, authorId }) => {
-        return await prisma.post.create({ data: { title, content, authorId } });
+      resolve: async (_, { dto }) => {
+        return await prisma.post.create({ data: dto });
       },
     },
-    subscribeToUser: {
-      type: new GraphQLList(UserType),
+    createProfile: {
+      type: ProfileType,
+      args: {
+        dto: { type: new GraphQLNonNull(CreateProfileInput) },
+      },
+      resolve: async (_, { dto }) => {
+        return await prisma.profile.create({ data: dto });
+      },
+    },
+    deleteUser: {
+      type: GraphQLBoolean,
+      args: { id: { type: new GraphQLNonNull(UUIDType) } },
+      resolve: async (_, { id }) => {
+        await prisma.user.delete({ where: { id } });
+        return true;
+      },
+    },
+    deletePost: {
+      type: GraphQLBoolean,
+      args: { id: { type: new GraphQLNonNull(UUIDType) } },
+      resolve: async (_, { id }) => {
+        await prisma.post.delete({ where: { id } });
+        return true;
+      },
+    },
+    deleteProfile: {
+      type: GraphQLBoolean,
+      args: { id: { type: new GraphQLNonNull(UUIDType) } },
+      resolve: async (_, { id }) => {
+        await prisma.profile.delete({ where: { id } });
+        return true;
+      },
+    },
+    changeUser: {
+      type: UserType,
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
+        dto: { type: new GraphQLNonNull(ChangeUserInput) },
+      },
+      resolve: async (_, { id, dto }) => {
+        return await prisma.user.update({
+          where: { id },
+          data: dto,
+        });
+      },
+    },
+
+   /*  type: PostType,
+    args: {
+      dto: { type: new GraphQLNonNull(CreatePostInput) },
+    },
+    resolve: async (_, { dto }) => {
+      return await prisma.post.create({ data: dto });
+    }, */
+    changePost: {
+      type: PostType,
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
+        dto: { type: new GraphQLNonNull(ChangePostInput) },
+      },
+      resolve: async (_, { id, dto }) => {
+        console.log("ID:", id, "DTO:", dto);
+        return await prisma.post.update({
+          where: { id },
+          data: dto,
+        });
+      },
+    },
+    changeProfile: {
+      type: ProfileType,
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
+        dto: { type: new GraphQLNonNull(ChangeProfileInput) },
+      },
+      resolve: async (_, { id, dto }) => {
+        console.log("ID:", id, "DTO:", dto);
+        return await prisma.profile.update({
+          where: { id },
+          data: dto,
+        });
+      },
+    },
+
+    subscribeTo: {
+      type: GraphQLBoolean,
       args: {
         userId: { type: new GraphQLNonNull(UUIDType) },
         authorId: { type: new GraphQLNonNull(UUIDType) },
       },
       resolve: async (_, { userId, authorId }) => {
         await prisma.subscribersOnAuthors.create({
-          data: { subscriberId: userId, authorId },
+          data: {
+            subscriberId: userId,
+            authorId,
+          },
         });
-        return prisma.user.findUnique({ where: { id: userId } });
+
+        return true;
       },
     },
-    unsubscribeFromUser: {
-      type: new GraphQLList(UserType),
+    
+    unsubscribeFrom: {
+      type: GraphQLBoolean,
       args: {
         userId: { type: new GraphQLNonNull(UUIDType) },
         authorId: { type: new GraphQLNonNull(UUIDType) },
@@ -173,24 +259,13 @@ const MutationType = new GraphQLObjectType({
       resolve: async (_, { userId, authorId }) => {
         await prisma.subscribersOnAuthors.delete({
           where: {
-            subscriberId_authorId: { subscriberId: userId, authorId },
+            subscriberId_authorId: {
+              subscriberId: userId,
+              authorId,
+            },
           },
         });
-        return prisma.user.findUnique({ where: { id: userId } });
-      },
-    },
-    updateProfile: {
-      type: ProfileType,
-      args: {
-        id: { type: new GraphQLNonNull(UUIDType) },
-        isMale: { type: GraphQLBoolean },
-        yearOfBirth: { type: new GraphQLNonNull(GraphQLInt) },
-      },
-      resolve: async (_, { id, isMale, yearOfBirth }) => {
-        return await prisma.profile.update({
-          where: { id },
-          data: { isMale, yearOfBirth },
-        });
+        return true;
       },
     },
   },
@@ -200,4 +275,3 @@ export const schema = new GraphQLSchema({
   query: QueryType,
   mutation: MutationType,
 });
-
