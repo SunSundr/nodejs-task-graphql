@@ -1,14 +1,12 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
-import { createGqlResponseSchema, gqlResponseSchema } from './schemas.js';
 import { graphql, validate, parse } from 'graphql';
-import { schema } from './schema-graphql.js';
-import {
-  createUserLoaderPrime,
-  createPostLoader,
-  createMemberTypeLoader,
-  createProfileLoader,
-} from './loaders.js';
 import depthLimit from 'graphql-depth-limit';
+import { createGqlResponseSchema, gqlResponseSchema } from './schemas.js';
+import { schema } from './schema-graphql.js';
+import { createUserLoaderPrime } from './loaders/userPrime-loader.js';
+import { createMemberTypeLoader } from './loaders/memberType-loader.js';
+import { createPostLoader } from './loaders/post-loader.js';
+import { createProfileLoader } from './loaders/profile-loader.js';
 import { Loaders } from './types/model.js';
 import { parseQueryKeys, HasQueryKeys } from './parse-query.js';
 
@@ -33,9 +31,7 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
     },
     async handler(req) {
       const { query, variables } = req.body;
-
       const parsedQuery = parse(query);
-
       const validationErrors = validate(schema, parsedQuery, [depthLimit(5)]);
       if (validationErrors.length > 0) {
         return { errors: validationErrors };
