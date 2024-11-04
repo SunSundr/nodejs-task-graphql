@@ -8,48 +8,10 @@ import {
   GraphQLFloat,
   GraphQLEnumType,
 } from 'graphql';
-import { PrismaClient } from '@prisma/client';
+import { User, Post, Profile } from '@prisma/client';
 import { UUIDType } from './uuid.js';
-import { Loaders } from '../loaders.js';
+import { GraphQLContext } from './model.js';
 
-const prisma = new PrismaClient();
-
-// const UUIDType = GraphQLString; // TEST
-
-export interface UserDto {
-  id: string;
-  name: string;
-  balance: number;
-}
-
-export interface PostDto {
-  id: string;
-  title: string;
-  content: string;
-  authorId: string;
-}
-
-export interface ProfileDto {
-  id: string;
-  isMale: boolean;
-  yearOfBirth: number;
-  memberTypeId: string;
-  userId: string;
-}
-
-export interface ProfileDto {
-  id: string;
-  isMale: boolean;
-  yearOfBirth: number;
-  memberTypeId: string;
-  userId: string;
-}
-
-export interface Member {
-  id: string;
-  discount: number;
-  postsLimitPerMonth: number;
-}
 
 const MemberType = new GraphQLObjectType({
   name: 'MemberType',
@@ -76,100 +38,49 @@ const UserType: GraphQLObjectType = new GraphQLObjectType({
     balance: { type: new GraphQLNonNull(GraphQLFloat) },
     posts: { 
       type: new GraphQLList(PostType),
-      resolve: async (user: UserDto) => {
-        return await prisma.post.findMany({ where: { authorId: user.id } });
+      resolve: async (user: User, _cn, context: GraphQLContext) => {
+        return await context.loaders.postLoader.load(user.id);
+        // return await context.prisma.post.findMany({ where: { authorId: user.id } });
       },
     },
     profile: {
       type:  ProfileType, // OK !!!
-      resolve: async (user: UserDto) => {
-        // console.log('ProfileType');
-        return await prisma.profile.findUnique({ where: { userId: user.id } });
+      resolve: async (user: User, _cn, context: GraphQLContext) => {
+        return await context.loaders.profileLoader.load({ userId: user.id });
+        // return await context.prisma.profile.findUnique({ where: { userId: user.id } });
       },
     },
     
     userSubscribedTo: {
       type: new GraphQLList(UserType),
-      resolve: async (user: UserDto) => {
-        // console.log(' ****');
-        // console.log('1)', user.id);
-        // const result = await prisma.user.findMany({
+      resolve: async (user: User, _cn, context: GraphQLContext) => {
+         return await context.loaders.subscriptionLoader.load({ subscribedToUser: user.id });
+        // const subscriptions: User[] = await context.prisma.user.findMany({
         //   where: {
-        //     userSubscribedTo: {
-        //       some: {
-        //         authorId: user.id,
-        //       },
-        //     },
-        //   },
-        // });
-        // console.log('*)', result[0]?.id);
-
-       /*  return prisma.user.findMany({
-          where: {
-            userSubscribedTo: {
-              some: {
-                authorId: user.id,
-              },
-            },
-          },
-        }); */
-
-        const subscriptions = prisma.user.findMany({
-          where: {
-            subscribedToUser: {
-              some: {
-                subscriberId: user.id,
-              },
-            },
-          },
-        });
-        
-        return subscriptions || [];
-
-        // return await prisma.user.findMany({
-        //   where: {
-        //     userSubscribedTo: {
+        //     subscribedToUser: {
         //       some: {
         //         subscriberId: user.id,
         //       },
         //     },
         //   },
         // });
+        // return subscriptions || []; 
       },
     },
     subscribedToUser: {
       type: new GraphQLList(UserType),
-      resolve: async (user: UserDto) => {
-
-        const result = await prisma.user.findMany({
-          where: {
-            userSubscribedTo: {
-              some: {
-                authorId: user.id,
-              },
-            },
-          },
-        });
-
-        return result;
-        // return prisma.user.findMany({
+      resolve: async (user: User, _cn, context: GraphQLContext) => {
+        return await context.loaders.subscriptionLoader.load({ userSubscribedTo: user.id });
+        // const result: User[] = await context.prisma.user.findMany({
         //   where: {
-        //     subscribedToUser: {
-        //       some: {
-        //         subscriberId: user.id,
-        //       },
-        //     },
-        //   },
-        // });
-        // return await prisma.user.findMany({
-        //   where: {
-        //     subscribedToUser: {
+        //     userSubscribedTo: {
         //       some: {
         //         authorId: user.id,
         //       },
         //     },
         //   },
         // });
+        // return result || [];
       },
     },
   }),
@@ -184,9 +95,9 @@ const PostType: GraphQLObjectType = new GraphQLObjectType({
     authorId: { type: new GraphQLNonNull(UUIDType) },
     author: {
       type: UserType,
-      resolve: async (post: PostDto) => {
-        // console.log('UserType'); // ???
-        return await prisma.user.findUnique({ where: { id: post.authorId } });
+      resolve: async (post: Post, _cn, context: GraphQLContext) => {
+        return await context.loaders.postLoader.load(post.authorId); // OK
+         // return await context.prisma.user.findUnique({ where: { id: post.authorId } });
       },
     },
   },
@@ -201,15 +112,15 @@ const ProfileType: GraphQLObjectType = new GraphQLObjectType({
     userId: { type: new GraphQLNonNull(UUIDType) },
     memberType: {
       type: new GraphQLNonNull(MemberType),
-      resolve: async (profile, _, { loaders }: { loaders: Loaders }) => {
-        return await loaders.memberTypeLoader.load(profile.memberTypeId);
+      resolve: async (profile: Profile, _cn, context: GraphQLContext) => {
+        return await context.loaders.memberTypeLoader.load(profile.memberTypeId);
       },
     },
     user: {
       type: UserType,
-      resolve: async (profile: ProfileDto) => {
-        // console.log('Profile > user'); // ???
-        return await prisma.user.findUnique({ where: { id: profile.userId } });
+      resolve: async (profile: Profile, _cn, context: GraphQLContext) => {
+        return await context.loaders.userLoader.load(profile.userId); //  ????????????
+        // return await context.prisma.user.findUnique({ where: { id: profile.userId } });
       },
     },
   },
