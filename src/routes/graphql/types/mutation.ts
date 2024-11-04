@@ -1,72 +1,154 @@
-import {
-  GraphQLInputObjectType,
-  GraphQLString,
-  GraphQLNonNull,
-  GraphQLInt,
-  GraphQLBoolean,
-  GraphQLFloat,
-} from 'graphql';
-import { MemberTypeIdEnum } from './types.js';
+import { GraphQLObjectType, GraphQLBoolean, GraphQLNonNull } from 'graphql';
+import { User, Post, Profile } from '@prisma/client';
+import { UserType, PostType, ProfileType } from './object-types.js';
 import { UUIDType } from './uuid.js';
+import  { 
+  CreateUserInput, 
+  ChangeUserInput,
+  CreatePostInput,
+  CreateProfileInput,
+  ChangeProfileInput,
+  ChangePostInput,
+} from './input-types.js';
+import { GraphQLContext, UUIDstr } from './model.js';
 
-// Input CreateUser
-const CreateUserInput = new GraphQLInputObjectType({
-  name: 'CreateUserInput',
+export const MutationType = new GraphQLObjectType({
+  name: 'Mutation',
   fields: {
-    name: { type: new GraphQLNonNull(GraphQLString) },
-    balance: { type: new GraphQLNonNull(GraphQLFloat) },
+    createUser: {
+      type: UserType,
+      args: {
+        dto: { type: new GraphQLNonNull(CreateUserInput) },
+      },
+      resolve: async (_sr, { dto }: { dto: User }, context: GraphQLContext) => {
+        return await context.prisma.user.create({ data: dto });
+      },
+    },
+
+    createPost: {
+      type: PostType,
+      args: {
+        dto: { type: new GraphQLNonNull(CreatePostInput) },
+      },
+      resolve: async (_sr, { dto }: { dto: Post }, context: GraphQLContext) => {
+        return await context.prisma.post.create({ data: dto });
+      },
+    },
+
+    createProfile: {
+      type: ProfileType,
+      args: {
+        dto: { type: new GraphQLNonNull(CreateProfileInput) },
+      },
+      resolve: async (_sr, { dto }: { dto: Profile }, context: GraphQLContext) => {
+        return await context.prisma.profile.create({ data: dto });
+      },
+    },
+
+    deleteUser: {
+      type: GraphQLBoolean,
+      args: { id: { type: new GraphQLNonNull(UUIDType) } },
+      resolve: async (_sr, { id }: { id: UUIDstr }, context: GraphQLContext) => {
+        await context.prisma.user.delete({ where: { id } });
+        return true;
+      },
+    },
+
+    deletePost: {
+      type: GraphQLBoolean,
+      args: { id: { type: new GraphQLNonNull(UUIDType) } },
+      resolve: async (_sr, { id }: { id: UUIDstr }, context: GraphQLContext) => {
+        await context.prisma.post.delete({ where: { id } });
+        return true;
+      },
+    },
+
+    deleteProfile: {
+      type: GraphQLBoolean,
+      args: { id: { type: new GraphQLNonNull(UUIDType) } },
+      resolve: async (_sr, { id }: { id: UUIDstr }, context: GraphQLContext) => {
+        await context.prisma.profile.delete({ where: { id } });
+        return true;
+      },
+    },
+
+    changeUser: {
+      type: UserType,
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
+        dto: { type: new GraphQLNonNull(ChangeUserInput) },
+      },
+      resolve: async (_sr, { id, dto }: { id: UUIDstr, dto: User }, context: GraphQLContext) => {
+        return await context.prisma.user.update({
+          where: { id },
+          data: dto,
+        });
+      },
+    },
+
+    changePost: {
+      type: PostType,
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
+        dto: { type: new GraphQLNonNull(ChangePostInput) },
+      },
+      resolve: async (_sr, { id, dto }: { id: UUIDstr, dto: Post }, context: GraphQLContext) => {
+        // console.log("ID:", id, "DTO:", dto);
+        return await context.prisma.post.update({
+          where: { id },
+          data: dto,
+        });
+      },
+    },
+
+    changeProfile: {
+      type: ProfileType,
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
+        dto: { type: new GraphQLNonNull(ChangeProfileInput) },
+      },
+      resolve: async (_sr, { id, dto }: { id: UUIDstr, dto: Profile }, context: GraphQLContext) => {
+        return await context.prisma.profile.update({
+          where: { id },
+          data: dto,
+        });
+      },
+    },
+
+    subscribeTo: {
+      type: GraphQLBoolean,
+      args: {
+        userId: { type: new GraphQLNonNull(UUIDType) },
+        authorId: { type: new GraphQLNonNull(UUIDType) },
+      },
+      resolve: async (_sr, { userId, authorId }: { userId: UUIDstr, authorId: UUIDstr }, context: GraphQLContext) => {
+        await context.prisma.subscribersOnAuthors.create({
+          data: {
+            subscriberId: userId,
+            authorId,
+          },
+        });
+        return true;
+      },
+    },
+    
+    unsubscribeFrom: {
+      type: GraphQLBoolean,
+      args: {
+        userId: { type: new GraphQLNonNull(UUIDType) },
+        authorId: { type: new GraphQLNonNull(UUIDType) },
+      },
+      resolve: async (_sr, { userId, authorId }: { userId: UUIDstr, authorId: UUIDstr }, context: GraphQLContext) => {
+        await context.prisma.subscribersOnAuthors.delete({
+          where: {
+            subscriberId_authorId: {
+              subscriberId: userId,
+              authorId,
+            },
+          },
+        });
+        return true;
+      },
+    },
   },
 });
-
-// Input ChangeUser
-const ChangeUserInput = new GraphQLInputObjectType({
-  name: 'ChangeUserInput',
-  fields: {
-    name: { type: GraphQLString },
-    balance: { type: GraphQLFloat },
-  },
-});
-
-// Input CreatePost
-const CreatePostInput = new GraphQLInputObjectType({
-  name: 'CreatePostInput',
-  fields: {
-    title: { type: new GraphQLNonNull(GraphQLString) },
-    content: { type: new GraphQLNonNull(GraphQLString) },
-    authorId: { type: new GraphQLNonNull(UUIDType) },
-  },
-});
-
-// Input CreateProfile
-const CreateProfileInput = new GraphQLInputObjectType({
-  name: 'CreateProfileInput',
-  fields: {
-    isMale: { type: new GraphQLNonNull(GraphQLBoolean) },
-    yearOfBirth: { type: new GraphQLNonNull(GraphQLInt) },
-    memberTypeId: { type: new GraphQLNonNull(MemberTypeIdEnum) },
-    userId: { type: new GraphQLNonNull(UUIDType) },
-  },
-});
-
-const ChangeProfileInput = new GraphQLInputObjectType({
-  name: 'ChangeProfileInput',
-  fields: {
-    //id: { type: new GraphQLNonNull(GraphQLString) },
-    isMale: { type: GraphQLBoolean },
-    yearOfBirth: { type: GraphQLInt },
-    // memberTypeId: { type: MemberTypeIdEnum },
-    // userId: { type: UUIDType },
-  },
-});
-
-const ChangePostInput = new GraphQLInputObjectType({
-  name: 'ChangePostInput',
-  fields: {
-    //id: { type: new GraphQLNonNull(GraphQLString) },
-    title: { type: GraphQLString },
-    content: { type: GraphQLString },
-    // authorId: { type: UUIDType },
-  },
-});
-
-export { CreateUserInput, ChangeUserInput, CreatePostInput, CreateProfileInput, ChangeProfileInput, ChangePostInput };

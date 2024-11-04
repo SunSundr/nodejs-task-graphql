@@ -203,7 +203,6 @@ export const createProfileLoader = (prisma: PrismaClient) => {
     const ids = keys.filter(key => key.id).map(key => key.id);
     const userIds = keys.filter(key => key.userId).map(key => key.userId);
 
-
     const profiles: Profile[] = await prisma.profile.findMany({
       where: {
         OR: [

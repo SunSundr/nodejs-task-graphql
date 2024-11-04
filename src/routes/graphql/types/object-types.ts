@@ -11,6 +11,7 @@ import {
 import { User, Post, Profile } from '@prisma/client';
 import { UUIDType } from './uuid.js';
 import { GraphQLContext } from './model.js';
+import { MemberTypeId } from '../../member-types/schemas.js';
 
 
 const MemberType = new GraphQLObjectType({
@@ -22,13 +23,24 @@ const MemberType = new GraphQLObjectType({
   },
 });
 
-const MemberTypeIdEnum = new GraphQLEnumType({ // use import !!!
+
+const MemberTypeIdEnum = new GraphQLEnumType({
   name: 'MemberTypeId',
-  values: {
-    BASIC: { value: 'BASIC' },
-    BUSINESS: { value: 'BUSINESS' },
-  },
+  values: Object.keys(MemberTypeId).reduce((acc, key) => {
+    if (Object.prototype.hasOwnProperty.call(MemberTypeId, key)) {
+      acc[key] = { value: (MemberTypeId as { [key: string]: string })[key] };
+    }
+    return acc;
+  }, {} as Record<string, { value: string }>),
 });
+
+// const MemberTypeIdEnum = new GraphQLEnumType({ // use import !!!
+//   name: 'MemberTypeId',
+//   values: {
+//     BASIC: { value: 'BASIC' },
+//     BUSINESS: { value: 'BUSINESS' },
+//   },
+// });
 
 const UserType: GraphQLObjectType = new GraphQLObjectType({
   name: 'User',
