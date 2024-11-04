@@ -9,7 +9,6 @@ import {
 import { MemberTypeIdEnum } from './object-types.js';
 import { UUIDType } from './uuid.js';
 
-
 const CreateUserInput = new GraphQLInputObjectType({
   name: 'CreateUserInput',
   fields: {
@@ -17,7 +16,6 @@ const CreateUserInput = new GraphQLInputObjectType({
     balance: { type: new GraphQLNonNull(GraphQLFloat) },
   },
 });
-
 
 const ChangeUserInput = new GraphQLInputObjectType({
   name: 'ChangeUserInput',
@@ -27,7 +25,6 @@ const ChangeUserInput = new GraphQLInputObjectType({
   },
 });
 
-
 const CreatePostInput = new GraphQLInputObjectType({
   name: 'CreatePostInput',
   fields: {
@@ -36,7 +33,6 @@ const CreatePostInput = new GraphQLInputObjectType({
     authorId: { type: new GraphQLNonNull(UUIDType) },
   },
 });
-
 
 const CreateProfileInput = new GraphQLInputObjectType({
   name: 'CreateProfileInput',
@@ -51,25 +47,25 @@ const CreateProfileInput = new GraphQLInputObjectType({
 const ChangeProfileInput = new GraphQLInputObjectType({
   name: 'ChangeProfileInput',
   fields: {
-    //id: { type: new GraphQLNonNull(GraphQLString) },
+    //id: { type: new GraphQLNonNull(GraphQLString) }, // not used
     isMale: { type: GraphQLBoolean },
     yearOfBirth: { type: GraphQLInt },
-    // memberTypeId: { type: MemberTypeIdEnum },
-    // userId: { type: UUIDType },
+    // memberTypeId: { type: MemberTypeIdEnum }, // not used
+    // userId: { type: UUIDType }, // not used
   },
 });
 
 const ChangePostInput = new GraphQLInputObjectType({
   name: 'ChangePostInput',
   fields: {
-    //id: { type: new GraphQLNonNull(GraphQLString) },
+    //id: { type: new GraphQLNonNull(GraphQLString) }, // not used
     title: { type: GraphQLString },
     content: { type: GraphQLString },
-    // authorId: { type: UUIDType },
+    // authorId: { type: UUIDType }, // not used
   },
 });
 
-export { 
+export {
   CreateUserInput,
   ChangeUserInput,
   CreatePostInput,

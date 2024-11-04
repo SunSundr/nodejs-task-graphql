@@ -1,9 +1,9 @@
-import { 
+import {
   GraphQLObjectType,
   GraphQLString,
   GraphQLList,
   GraphQLInt,
-  GraphQLNonNull, 
+  GraphQLNonNull,
   GraphQLBoolean,
   GraphQLFloat,
   GraphQLEnumType,
@@ -12,7 +12,6 @@ import { User, Post, Profile } from '@prisma/client';
 import { UUIDType } from './uuid.js';
 import { GraphQLContext } from './model.js';
 import { MemberTypeId } from '../../member-types/schemas.js';
-
 
 const MemberType = new GraphQLObjectType({
   name: 'MemberType',
@@ -23,24 +22,18 @@ const MemberType = new GraphQLObjectType({
   },
 });
 
-
 const MemberTypeIdEnum = new GraphQLEnumType({
   name: 'MemberTypeId',
-  values: Object.keys(MemberTypeId).reduce((acc, key) => {
-    if (Object.prototype.hasOwnProperty.call(MemberTypeId, key)) {
-      acc[key] = { value: (MemberTypeId as { [key: string]: string })[key] };
-    }
-    return acc;
-  }, {} as Record<string, { value: string }>),
+  values: Object.keys(MemberTypeId).reduce(
+    (acc, key) => {
+      if (Object.prototype.hasOwnProperty.call(MemberTypeId, key)) {
+        acc[key] = { value: (MemberTypeId as { [key: string]: string })[key] };
+      }
+      return acc;
+    },
+    {} as Record<string, { value: string }>,
+  ),
 });
-
-// const MemberTypeIdEnum = new GraphQLEnumType({ // use import !!!
-//   name: 'MemberTypeId',
-//   values: {
-//     BASIC: { value: 'BASIC' },
-//     BUSINESS: { value: 'BUSINESS' },
-//   },
-// });
 
 const UserType: GraphQLObjectType = new GraphQLObjectType({
   name: 'User',
@@ -48,7 +41,7 @@ const UserType: GraphQLObjectType = new GraphQLObjectType({
     id: { type: new GraphQLNonNull(UUIDType) },
     name: { type: new GraphQLNonNull(GraphQLString) },
     balance: { type: new GraphQLNonNull(GraphQLFloat) },
-    posts: { 
+    posts: {
       type: new GraphQLList(PostType),
       resolve: async (user: User, _cn, context: GraphQLContext) => {
         return await context.loaders.postLoader.load(user.id);
@@ -56,18 +49,17 @@ const UserType: GraphQLObjectType = new GraphQLObjectType({
       },
     },
     profile: {
-      type:  ProfileType, // OK !!!
+      type: ProfileType, // OK !!!
       resolve: async (user: User, _cn, context: GraphQLContext) => {
         return await context.loaders.profileLoader.load({ userId: user.id });
         // return await context.prisma.profile.findUnique({ where: { userId: user.id } });
       },
     },
-    
+
     userSubscribedTo: {
       type: new GraphQLList(UserType),
       resolve: async (user: User, _cn, context: GraphQLContext) => {
-        // return await context.loaders.subscriptionLoader.load({ subscribedToUser: user.id });
-         return await context.loaders.userLoaderPrime.load({ subscribedToUser: user.id });
+        return await context.loaders.userLoaderPrime.load({ subscribedToUser: user.id });
         // const subscriptions: User[] = await context.prisma.user.findMany({
         //   where: {
         //     subscribedToUser: {
@@ -77,13 +69,12 @@ const UserType: GraphQLObjectType = new GraphQLObjectType({
         //     },
         //   },
         // });
-        // return subscriptions || []; 
+        // return subscriptions;
       },
     },
     subscribedToUser: {
       type: new GraphQLList(UserType),
       resolve: async (user: User, _cn, context: GraphQLContext) => {
-        // return await context.loaders.subscriptionLoader.load({ userSubscribedTo: user.id });
         return await context.loaders.userLoaderPrime.load({ userSubscribedTo: user.id });
         // const result: User[] = await context.prisma.user.findMany({
         //   where: {
@@ -94,7 +85,7 @@ const UserType: GraphQLObjectType = new GraphQLObjectType({
         //     },
         //   },
         // });
-        // return result || [];
+        // return result;
       },
     },
   }),
@@ -110,8 +101,8 @@ const PostType: GraphQLObjectType = new GraphQLObjectType({
     author: {
       type: UserType,
       resolve: async (post: Post, _cn, context: GraphQLContext) => {
-        return await context.loaders.postLoader.load(post.authorId); // OK
-         // return await context.prisma.user.findUnique({ where: { id: post.authorId } });
+        return await context.loaders.postLoader.load(post.authorId);
+        // return await context.prisma.user.findUnique({ where: { id: post.authorId } });
       },
     },
   },
@@ -128,13 +119,13 @@ const ProfileType: GraphQLObjectType = new GraphQLObjectType({
       type: new GraphQLNonNull(MemberType),
       resolve: async (profile: Profile, _cn, context: GraphQLContext) => {
         return await context.loaders.memberTypeLoader.load(profile.memberTypeId);
+        // return await context.prisma.memberType.findUnique({ where: { id: profile.memberTypeId } });
       },
     },
     user: {
       type: UserType,
       resolve: async (profile: Profile, _cn, context: GraphQLContext) => {
         return await context.loaders.userLoaderPrime.load({ user: profile.userId });
-        // return await context.loaders.userLoader.load(profile.userId); //  ????????????
         // return await context.prisma.user.findUnique({ where: { id: profile.userId } });
       },
     },

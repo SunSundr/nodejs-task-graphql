@@ -1,11 +1,11 @@
-import { 
+import {
   DocumentNode,
   FieldNode,
   OperationDefinitionNode,
   SelectionNode,
   SelectionSetNode,
   InlineFragmentNode,
-  Kind, 
+  Kind,
 } from 'graphql';
 
 export interface HasQueryKeys {
@@ -41,8 +41,8 @@ export const parseQueryKeys = (parsedQuery: DocumentNode): HasQueryKeys => {
   };
 
   const hasSelectionSet = (
-    node: SelectionNode
-  ): node is FieldNode | InlineFragmentNode & { selectionSet: SelectionSetNode } =>
+    node: SelectionNode,
+  ): node is FieldNode | (InlineFragmentNode & { selectionSet: SelectionSetNode }) =>
     'selectionSet' in node && node.selectionSet !== undefined;
 
   const visitSelections = (selections: readonly SelectionNode[]) => {
@@ -56,7 +56,7 @@ export const parseQueryKeys = (parsedQuery: DocumentNode): HasQueryKeys => {
   };
 
   const operation = parsedQuery.definitions.find(
-    (def): def is OperationDefinitionNode => def.kind === Kind.OPERATION_DEFINITION
+    (def): def is OperationDefinitionNode => def.kind === Kind.OPERATION_DEFINITION,
   );
 
   if (operation && operation.selectionSet) {

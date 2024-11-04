@@ -3,28 +3,20 @@ import DataLoader from 'dataloader';
 
 export type UUIDstr = string;
 
-export type ProfileLoadArgs = { id?: string; userId?: string };
-
-export type SubscriptionLoadArgs = { // remove
-  userSubscribedTo?: string;
-  subscribedToUser?: string;
-};
+export type ProfileLoadArgs = { id?: UUIDstr; userId?: UUIDstr };
 
 export type UserLoadArgs = {
-  userSubscribedTo?: string;
-  subscribedToUser?: string;
+  userSubscribedTo?: UUIDstr;
+  subscribedToUser?: UUIDstr;
   users?: boolean;
-  user?: string;
+  user?: UUIDstr;
 };
 
-
 export type Loaders = {
-  userLoader?: DataLoader<string, User | null>; // remove
-  postLoader: DataLoader<string, Post[]>;
   memberTypeLoader: DataLoader<string, MemberType | null>;
-  profileLoader: DataLoader<ProfileLoadArgs, Profile | null>;
-  subscriptionLoader: DataLoader<SubscriptionLoadArgs, User[]>; // remove
   userLoaderPrime: DataLoader<UserLoadArgs, User[] | User | null>;
+  profileLoader: DataLoader<ProfileLoadArgs, Profile | null>;
+  postLoader: DataLoader<string, Post[]>;
 };
 
 export interface GraphQLContext {
