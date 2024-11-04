@@ -3,6 +3,7 @@ import { createGqlResponseSchema, gqlResponseSchema } from './schemas.js';
 import { graphql, validate, parse } from 'graphql';
 import { schema } from './schema.js';
 import { 
+  createUserLoaderPrime,
   createUserLoader,
   createPostLoader,
   createMemberTypeLoader,
@@ -10,17 +11,21 @@ import {
   createSubscriptionLoader,
 } from './loaders.js';
 import depthLimit from 'graphql-depth-limit';
+import { Loaders } from './types/model.js';
+import { parseQueryKeys, HasQueryKeys } from './parse-query.js';
+
 
 const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
   const { prisma } = fastify;
 
-  const initLoaders = () => {
+  const initLoaders = (queryKeys: HasQueryKeys): Loaders => {
     return {
-      userLoader: createUserLoader(prisma),
+      userLoader: createUserLoader(prisma), // remove
       postLoader: createPostLoader(prisma),
       memberTypeLoader: createMemberTypeLoader(prisma),
       profileLoader: createProfileLoader(prisma),
-      subscriptionLoader: createSubscriptionLoader(prisma),
+      subscriptionLoader: createSubscriptionLoader(prisma),  // remove
+      userLoaderPrime: createUserLoaderPrime(prisma, queryKeys),
     }
   }
 
@@ -41,12 +46,13 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
         return { errors: validationErrors };
       }
       
+      const queryKeys = parseQueryKeys(parsedQuery);
 
       const response = await graphql({
         schema,
         source: query,
         variableValues: variables,
-        contextValue: { prisma, loaders: initLoaders() },
+        contextValue: { prisma, loaders: initLoaders(queryKeys) },
       });
       return response;
     },

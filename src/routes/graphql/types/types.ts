@@ -54,7 +54,8 @@ const UserType: GraphQLObjectType = new GraphQLObjectType({
     userSubscribedTo: {
       type: new GraphQLList(UserType),
       resolve: async (user: User, _cn, context: GraphQLContext) => {
-         return await context.loaders.subscriptionLoader.load({ subscribedToUser: user.id });
+        // return await context.loaders.subscriptionLoader.load({ subscribedToUser: user.id });
+         return await context.loaders.userLoaderPrime.load({ subscribedToUser: user.id });
         // const subscriptions: User[] = await context.prisma.user.findMany({
         //   where: {
         //     subscribedToUser: {
@@ -70,7 +71,8 @@ const UserType: GraphQLObjectType = new GraphQLObjectType({
     subscribedToUser: {
       type: new GraphQLList(UserType),
       resolve: async (user: User, _cn, context: GraphQLContext) => {
-        return await context.loaders.subscriptionLoader.load({ userSubscribedTo: user.id });
+        // return await context.loaders.subscriptionLoader.load({ userSubscribedTo: user.id });
+        return await context.loaders.userLoaderPrime.load({ userSubscribedTo: user.id });
         // const result: User[] = await context.prisma.user.findMany({
         //   where: {
         //     userSubscribedTo: {
@@ -119,7 +121,8 @@ const ProfileType: GraphQLObjectType = new GraphQLObjectType({
     user: {
       type: UserType,
       resolve: async (profile: Profile, _cn, context: GraphQLContext) => {
-        return await context.loaders.userLoader.load(profile.userId); //  ????????????
+        return await context.loaders.userLoaderPrime.load({ user: profile.userId });
+        // return await context.loaders.userLoader.load(profile.userId); //  ????????????
         // return await context.prisma.user.findUnique({ where: { id: profile.userId } });
       },
     },
